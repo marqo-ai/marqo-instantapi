@@ -1,0 +1,18 @@
+[project]
+name = "marqo-instantapi"
+version = "0.1.0"
+description = "A Python package for the Marqo InstantAPI adapter"
+authors = [
+    {name = "Owen Elliott", email = "owen@marqo.ai"}
+]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.8"
+
+[project.dependencies]
+requests = "^2.0"
+marqo = "^3.7.0"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"

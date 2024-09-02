@@ -1,0 +1,2 @@
+marqo==3.7.0
+requests
