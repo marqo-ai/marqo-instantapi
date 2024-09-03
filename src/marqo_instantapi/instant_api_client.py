@@ -1,5 +1,5 @@
 import requests
-
+import json
 from typing import Dict, Any, Union, Optional
 
 
@@ -7,6 +7,7 @@ class InstantAPIClient:
     def __init__(self, api_key):
         self.api_key = api_key
         self.base_url = "https://instantapi.ai/api"
+        self.headers = {"Content-Type": "application/json"}
 
     def retrieve(
         self,
@@ -17,12 +18,15 @@ class InstantAPIClient:
         country_code: Optional[str] = None,
         verbose: bool = False,
         wait_for_xpath: Optional[str] = None,
-        enable_javascript: bool = True,
+        enable_javascript: Optional[bool] = None,
         cache_ttl: Optional[int] = None,
         serp_limit: Optional[int] = None,
         serp_site: Optional[str] = None,
         serp_page_num: Optional[int] = None,
     ) -> Dict[str, Any]:
+
+        if isinstance(api_response_structure, dict):
+            api_response_structure = json.dumps(api_response_structure)
 
         payload = {
             "webpage_url": webpage_url,
@@ -50,12 +54,18 @@ class InstantAPIClient:
         if serp_page_num:
             payload["serp_page_num"] = serp_page_num
 
-        response = requests.post(self.base_url + "/retrieve/", json=payload)
+        request_url = self.base_url + "/retrieve/"
+
+        response = requests.post(request_url, json=payload, headers=self.headers)
 
         if response.status_code == 200:
-            return response.json()
+            return json.loads(response.text)
         else:
-            return {"error": True, "reason": response.text}
+            return {
+                "error": True,
+                "reason": response.text,
+                "status_code": response.status_code,
+            }
 
     def next_pages(self, webpage_url: str) -> dict:
         payload = {"webpage_url": webpage_url, "api_key": self.api_key}

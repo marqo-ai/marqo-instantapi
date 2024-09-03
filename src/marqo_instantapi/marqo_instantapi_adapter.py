@@ -3,7 +3,7 @@ import tldextract
 from marqo_instantapi.instant_api_client import InstantAPIClient
 from collections import deque
 import hashlib
-from typing import Optional, Union, Any
+from typing import Optional, Union, Literal, Any
 
 
 class InstantAPIMarqoAdapter:
@@ -36,7 +36,11 @@ class InstantAPIMarqoAdapter:
         }
 
     def create_index(
-        self, index_name: str, multimodal: bool = False, model: Optional[str] = None
+        self,
+        index_name: str,
+        multimodal: bool = False,
+        model: Optional[str] = None,
+        skip_if_exists: bool = False,
     ) -> dict:
         """Simplified method for creating a Marqo index, recommended when fine grained control is not needed.
 
@@ -44,6 +48,7 @@ class InstantAPIMarqoAdapter:
             index_name (str): The name of the index to create.
             multimodal (bool, optional): Toggles image downloading on or off, if model is not provided then also influences model selection. Defaults to False.
             model (Optional[str], optional): Optionally specify a specific model. Defaults to None.
+            skip_if_exists (bool, optional): Skip index creation if the index already exists, does not check if the index conforms to the provided parameters. Defaults to False.
 
         Returns:
             dict: index creation response
@@ -58,7 +63,17 @@ class InstantAPIMarqoAdapter:
 
         settings["treatUrlsAndPointersAsImages"] = multimodal
 
-        return self.mq.create_index(index_name, settings_dict=settings)
+        if self._check_index_exists(index_name) and skip_if_exists:
+            self.mq.index(index_name).search(q="")
+            return {
+                "acknowledged": True,
+                "index": index_name,
+                "message": "Index already exists, skipping creation.",
+            }
+
+        response = self.mq.create_index(index_name, settings_dict=settings)
+        self.mq.index(index_name).search(q="")
+        return response
 
     def _extract_page_data(
         self, webpage_url: str, api_method_name: str, api_response_structure: dict
@@ -78,8 +93,8 @@ class InstantAPIMarqoAdapter:
             webpage_url=webpage_url,
             api_method_name=api_method_name,
             api_response_structure=api_response_structure,
-            verbose=True,
         )
+
         return response
 
     def _make_mappings(
@@ -104,8 +119,20 @@ class InstantAPIMarqoAdapter:
         if not image_fields_to_index:
             return None, text_fields_to_index
 
-        text_weight = total_text_weight / len(text_fields_to_index)
-        image_weight = total_image_weight / len(image_fields_to_index)
+        if total_image_weight == 0:
+            image_fields_to_index = []
+
+        if total_text_weight == 0:
+            text_fields_to_index = []
+
+        text_weight = (
+            total_text_weight / len(text_fields_to_index) if text_fields_to_index else 0
+        )
+        image_weight = (
+            total_image_weight / len(image_fields_to_index)
+            if image_fields_to_index
+            else 0
+        )
         weights = {}
         for field in text_fields_to_index:
             weights[field] = text_weight
@@ -153,18 +180,49 @@ class InstantAPIMarqoAdapter:
 
         return True
 
+    def _check_index_exists(self, index_name: str) -> bool:
+        response = self.mq.get_indexes()
+        return index_name in [index["indexName"] for index in response["results"]]
+
+    def _create_index_from_fields(
+        self,
+        index_name: str,
+        text_fields_to_index: list[str] = [],
+        image_fields_to_index: list[str] = [],
+    ):
+        if not text_fields_to_index and not image_fields_to_index:
+            raise ValueError(
+                "At least one field must be specified in text_fields_to_index and/or image_fields_to_index."
+            )
+
+        if text_fields_to_index and not image_fields_to_index:
+            return self.create_index(index_name, multimodal=False)
+
+        return self.create_index(index_name, multimodal=True)
+
     def add_documents(
         self,
         webpage_urls: list[str],
         index_name: str,
         api_response_structure: dict,
-        text_fields_to_index: list[str],
-        image_fields_to_index: list[str],
+        api_method_name: str,
+        text_fields_to_index: list[str] = [],
+        image_fields_to_index: list[str] = [],
         client_batch_size: int = 8,
         total_image_weight: float = 0.9,
         total_text_weight: float = 0.1,
         enforce_schema: bool = True,
     ) -> list[dict]:
+
+        if not text_fields_to_index and not image_fields_to_index:
+            raise ValueError(
+                "At least one field must be specified in text_fields_to_index and/or image_fields_to_index."
+            )
+
+        if not self._check_index_exists(index_name):
+            self._create_index_from_fields(
+                index_name, text_fields_to_index, image_fields_to_index
+            )
 
         self._check_schema_for_marqo(api_response_structure)
 
@@ -172,7 +230,12 @@ class InstantAPIMarqoAdapter:
         urls_to_index = []
         documents = []
         for webpage_url in webpage_urls:
-            page_data = self._extract_page_data(webpage_url, api_response_structure)
+            page_data = self._extract_page_data(
+                webpage_url=webpage_url,
+                api_method_name=api_method_name,
+                api_response_structure=api_response_structure,
+            )
+
             if enforce_schema:
                 if not self._check_against_schema(api_response_structure, page_data):
                     failed_schema_checks.append(
@@ -185,25 +248,32 @@ class InstantAPIMarqoAdapter:
                     continue
 
             urls_to_index.append(webpage_url)
-            page_data["_id"] = webpage_url
-            documents.append(page_data)
+            page_data["_id"] = hashlib.md5(webpage_url.encode()).hexdigest()
+            page_data["_source_webpage_url"] = webpage_url
 
+            documents.append(page_data)
+        print(documents)
         mappings, tensor_fields = self._make_mappings(
             text_fields_to_index,
             image_fields_to_index,
             total_image_weight,
             total_text_weight,
         )
-        response = self.mq.index(index_name).add_documents(
+
+        responses = self.mq.index(index_name).add_documents(
             documents=documents,
             tensor_fields=tensor_fields,
             mappings=mappings,
             client_batch_size=client_batch_size,
         )
 
+        if not isinstance(responses, list):
+            responses = [responses]
+
         outcomes = failed_schema_checks
-        for item in response["items"]:
-            outcomes.append({"url": item["_id"], "response": item})
+        for response in responses:
+            for item in response["items"]:
+                outcomes.append({"url_md5": item["_id"], "response": item})
 
         return outcomes
 
@@ -217,7 +287,7 @@ class InstantAPIMarqoAdapter:
             str: _description_
         """
         extracted = tldextract.extract(url)
-        domain = f"{extracted.domain}.{extracted.suffix}"
+        domain = f"{extracted.subdomain}.{extracted.domain}.{extracted.suffix}"
         return domain
 
     def crawl(
@@ -226,11 +296,17 @@ class InstantAPIMarqoAdapter:
         allowed_domains: set[str],
         index_name: str,
         api_response_structure: dict,
-        text_fields_to_index: list[str],
-        image_fields_to_index: list[str],
+        text_fields_to_index: list[str] = [],
+        image_fields_to_index: list[str] = [],
         client_batch_size: int = 8,
         max_pages: Optional[int] = None,
     ) -> list[dict]:
+
+        if not text_fields_to_index and not image_fields_to_index:
+            raise ValueError(
+                "At least one field must be specified in text_fields_to_index and/or image_fields_to_index."
+            )
+
         q = deque(initial_webpage_urls)
         pages = 0
         responses = []
@@ -268,12 +344,13 @@ class InstantAPIMarqoAdapter:
 
     def search(
         self,
-        query: str,
+        q: str,
         index_name: str,
         limit: int = 10,
         searchable_attributes: Optional[list] = None,
+        method: Literal["tensor", "lexical", "hybrid"] = "hybrid",
     ) -> dict:
         response = self.mq.index(index_name).search(
-            query, limit=limit, searchable_attributes=searchable_attributes
+            q, limit=limit, searchable_attributes=searchable_attributes
         )
         return response
