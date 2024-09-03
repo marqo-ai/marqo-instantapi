@@ -17,8 +17,6 @@ docker run --name marqo -it -p 8882:8882 marqoai/marqo:latest
 ```
 
 Then, install the marqo-instantapi package:
-
-bash```
-<!-- pip install marqo-instantapi -->
+```bash
 pip install .
 ```
