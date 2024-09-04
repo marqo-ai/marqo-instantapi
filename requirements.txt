@@ -1,3 +1,0 @@
-marqo==3.7.0
-requests
-tldextract==5.1.2
