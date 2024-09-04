@@ -30,12 +30,12 @@ jobs:
     - name: Build documentation
       run: |
         cd docs
-        sphinx-build -b html source build
+        sphinx-build -b html source ../build
 
     - name: Deploy to GitHub Pages
       if: github.ref == 'refs/heads/main'
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.DOCS_CREATION_TOKEN }}
-        publish_dir: ./docs/build/html
+        publish_dir: ./build
         keep_files: false
