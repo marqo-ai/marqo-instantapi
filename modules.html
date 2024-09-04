@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marqo InstantAPI &mdash; marqo-instantapi  documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="marqo-instantapi documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            marqo-instantapi
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Marqo InstantAPI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#marqo_instantapi.instant_api_client.InstantAPIClient"><code class="docutils literal notranslate"><span class="pre">InstantAPIClient</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#marqo_instantapi.instant_api_client.InstantAPIClient.next_pages"><code class="docutils literal notranslate"><span class="pre">InstantAPIClient.next_pages()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#marqo_instantapi.instant_api_client.InstantAPIClient.retrieve"><code class="docutils literal notranslate"><span class="pre">InstantAPIClient.retrieve()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter"><code class="docutils literal notranslate"><span class="pre">InstantAPIMarqoAdapter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.add_documents"><code class="docutils literal notranslate"><span class="pre">InstantAPIMarqoAdapter.add_documents()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.crawl"><code class="docutils literal notranslate"><span class="pre">InstantAPIMarqoAdapter.crawl()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.create_index"><code class="docutils literal notranslate"><span class="pre">InstantAPIMarqoAdapter.create_index()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.delete_index"><code class="docutils literal notranslate"><span class="pre">InstantAPIMarqoAdapter.delete_index()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.search"><code class="docutils literal notranslate"><span class="pre">InstantAPIMarqoAdapter.search()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">marqo-instantapi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Marqo InstantAPI</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/modules.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-marqo_instantapi">
+<span id="marqo-instantapi"></span><h1>Marqo InstantAPI<a class="headerlink" href="#module-marqo_instantapi" title="Link to this heading"></a></h1>
+<dl class="py class" id="module-marqo_instantapi.instant_api_client">
+<dt class="sig sig-object py" id="marqo_instantapi.instant_api_client.InstantAPIClient">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">marqo_instantapi.instant_api_client.</span></span><span class="sig-name descname"><span class="pre">InstantAPIClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">api_key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/marqo_instantapi/instant_api_client.html#InstantAPIClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marqo_instantapi.instant_api_client.InstantAPIClient" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A client for the InstantAPI API.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="marqo_instantapi.instant_api_client.InstantAPIClient.next_pages">
+<span class="sig-name descname"><span class="pre">next_pages</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">webpage_url</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/marqo_instantapi/instant_api_client.html#InstantAPIClient.next_pages"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marqo_instantapi.instant_api_client.InstantAPIClient.next_pages" title="Link to this definition"></a></dt>
+<dd><p>TODO: Implement the next_pages method.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><span class="sphinx_autodoc_typehints-type"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></span></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="marqo_instantapi.instant_api_client.InstantAPIClient.retrieve">
+<span class="sig-name descname"><span class="pre">retrieve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">webpage_url</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_method_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_response_structure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_parameters</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">country_code</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wait_for_xpath</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enable_javascript</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_ttl</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">serp_limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">serp_site</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">serp_page_num</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/marqo_instantapi/instant_api_client.html#InstantAPIClient.retrieve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marqo_instantapi.instant_api_client.InstantAPIClient.retrieve" title="Link to this definition"></a></dt>
+<dd><p>Implements an interface to the InstantAPI retrieve endpoint.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>webpage_url</strong> (<em>str</em>) – The URL of the webpage to retrieve data from.</p></li>
+<li><p><strong>api_method_name</strong> (<em>str</em>) – The name of the API method to use.</p></li>
+<li><p><strong>api_response_structure</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em>) – The structure of the API response.</p></li>
+<li><p><strong>api_parameters</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em><em>]</em><em>]</em><em>, </em><em>optional</em>) – The parameters to pass to the API method. Defaults to None.</p></li>
+<li><p><strong>country_code</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The country code to use for the request. Defaults to None.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to return verbose output. Defaults to False.</p></li>
+<li><p><strong>wait_for_xpath</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The XPath to wait for before returning the response. Defaults to None.</p></li>
+<li><p><strong>enable_javascript</strong> (<em>Optional</em><em>[</em><em>bool</em><em>]</em><em>, </em><em>optional</em>) – Whether to enable JavaScript in the browser. Defaults to None.</p></li>
+<li><p><strong>cache_ttl</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – The time-to-live for the cache. Defaults to None.</p></li>
+<li><p><strong>serp_limit</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – The number of results to return for SERP requests. Defaults to None.</p></li>
+<li><p><strong>serp_site</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – The site to use for SERP requests. Defaults to None.</p></li>
+<li><p><strong>serp_page_num</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – The page number to use for SERP requests. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The response from the InstantAPI retrieve endpoint.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict[str, Any]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class" id="module-marqo_instantapi.marqo_instantapi_adapter">
+<dt class="sig sig-object py" id="marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">marqo_instantapi.marqo_instantapi_adapter.</span></span><span class="sig-name descname"><span class="pre">InstantAPIMarqoAdapter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">marqo_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'http://localhost:8882'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marqo_api_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">instantapi_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/marqo_instantapi/marqo_instantapi_adapter.html#InstantAPIMarqoAdapter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class for interfacing with Marqo and InstantAPI.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.add_documents">
+<span class="sig-name descname"><span class="pre">add_documents</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">webpage_urls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_response_structure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_method_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_fields_to_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_fields_to_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total_image_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total_text_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enforce_schema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/marqo_instantapi/marqo_instantapi_adapter.html#InstantAPIMarqoAdapter.add_documents"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.add_documents" title="Link to this definition"></a></dt>
+<dd><p>Add documents to a Marqo index from a list of webpage URLs, data is extracted using the InstantAPI Retrieve API.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>webpage_urls</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – A list of webpage URLs to index.</p></li>
+<li><p><strong>index_name</strong> (<em>str</em>) – The name of the index to add documents to. If the index does not exist, it will be created based on the fields to index.</p></li>
+<li><p><strong>api_response_structure</strong> (<em>dict</em>) – The expected structure of the API’s response, this is passed to InstantAPI.</p></li>
+<li><p><strong>api_method_name</strong> (<em>str</em>) – The name of the API method to use for data extraction, this is passed to InstantAPI and should be descriptive to help to AI know what information to get.</p></li>
+<li><p><strong>text_fields_to_index</strong> (<em>list</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – A list of text fields for indexing. Defaults to [].</p></li>
+<li><p><strong>image_fields_to_index</strong> (<em>list</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – A list of image fields for indexing. Defaults to [].</p></li>
+<li><p><strong>client_batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – The client batch size for Marqo, controls how many docs are sent at a time. Defaults to 8.</p></li>
+<li><p><strong>total_image_weight</strong> (<em>float</em><em>, </em><em>optional</em>) – The total weight for images, applies when both image and text fields are provided. Defaults to 0.9.</p></li>
+<li><p><strong>total_text_weight</strong> (<em>float</em><em>, </em><em>optional</em>) – The total weight for text, applies when both image and text fields are provided. Defaults to 0.1.</p></li>
+<li><p><strong>enforce_schema</strong> (<em>bool</em><em>, </em><em>optional</em>) – Toggle strict enforcement of InstantAPI responses against the schema. Defaults to True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If no fields are provided for indexing.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list of responses for each document added.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[dict]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.crawl">
+<span class="sig-name descname"><span class="pre">crawl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">initial_webpage_urls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allowed_domains</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">api_response_structure</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text_fields_to_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_fields_to_index</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client_batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total_image_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">total_text_weight</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enforce_schema</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_pages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/marqo_instantapi/marqo_instantapi_adapter.html#InstantAPIMarqoAdapter.crawl"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.crawl" title="Link to this definition"></a></dt>
+<dd><p>Crawl a set of webpages and add them to a Marqo index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>initial_webpage_urls</strong> (<em>list</em><em>[</em><em>str</em><em>]</em>) – A list of initial webpage URLs to start the crawl from.</p></li>
+<li><p><strong>allowed_domains</strong> (<em>set</em><em>[</em><em>str</em><em>]</em>) – A set of domains to exclude from the crawl.</p></li>
+<li><p><strong>index_name</strong> (<em>str</em>) – The name of the index to add documents to. If the index does not exist, it will be created based on the fields to index.</p></li>
+<li><p><strong>api_response_structure</strong> (<em>dict</em>) – The expected structure of the API’s response, this is passed to InstantAPI.</p></li>
+<li><p><strong>text_fields_to_index</strong> (<em>list</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – A list of text fields for indexing. Defaults to [].</p></li>
+<li><p><strong>image_fields_to_index</strong> (<em>list</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – A list of image fields for indexing. Defaults to [].</p></li>
+<li><p><strong>client_batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – The client batch size for Marqo, controls how many docs are sent at a time. Defaults to 8.</p></li>
+<li><p><strong>total_image_weight</strong> (<em>float</em><em>, </em><em>optional</em>) – The total weight for images, applies when both image and text fields are provided. Defaults to 0.9.</p></li>
+<li><p><strong>total_text_weight</strong> (<em>float</em><em>, </em><em>optional</em>) – The total weight for text, applies when both image and text fields are provided. Defaults to 0.1.</p></li>
+<li><p><strong>enforce_schema</strong> (<em>bool</em><em>, </em><em>optional</em>) – Toggle strict enforcement of InstantAPI responses against the schema. Defaults to True.</p></li>
+<li><p><strong>max_pages</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em><em>, </em><em>optional</em>) – The maximum number of pages to crawl. Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If no fields are provided for indexing.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A list of responses for each document added.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list[dict]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.create_index">
+<span class="sig-name descname"><span class="pre">create_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">multimodal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_if_exists</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/marqo_instantapi/marqo_instantapi_adapter.html#InstantAPIMarqoAdapter.create_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.create_index" title="Link to this definition"></a></dt>
+<dd><p>Simplified method for creating a Marqo index, recommended when fine grained control is not needed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index_name</strong> (<em>str</em>) – The name of the index to create.</p></li>
+<li><p><strong>multimodal</strong> (<em>bool</em><em>, </em><em>optional</em>) – Toggles image downloading on or off, if model is not provided then also influences model selection. Defaults to False.</p></li>
+<li><p><strong>model</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em><em>, </em><em>optional</em>) – Optionally specify a specific model. Defaults to None.</p></li>
+<li><p><strong>skip_if_exists</strong> (<em>bool</em><em>, </em><em>optional</em>) – Skip index creation if the index already exists, does not check if the index conforms to the provided parameters. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>index creation response</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">marqo_adapter</span> <span class="o">=</span> <span class="n">InstantAPIMarqoAdapter</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">marqo_adapter</span><span class="o">.</span><span class="n">create_index</span><span class="p">(</span><span class="s2">&quot;my-index&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.delete_index">
+<span class="sig-name descname"><span class="pre">delete_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confirm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/marqo_instantapi/marqo_instantapi_adapter.html#InstantAPIMarqoAdapter.delete_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.delete_index" title="Link to this definition"></a></dt>
+<dd><p>Delete a Marqo index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>index_name</strong> (<em>str</em>) – The name of the index to delete.</p></li>
+<li><p><strong>confirm</strong> (<em>bool</em><em>, </em><em>optional</em>) – Automatically confirms the deletion. Defaults to False.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The deletion response.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.search">
+<span class="sig-name descname"><span class="pre">search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">searchable_attributes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'hybrid'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/marqo_instantapi/marqo_instantapi_adapter.html#InstantAPIMarqoAdapter.search"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.search" title="Link to this definition"></a></dt>
+<dd><p>Search a Marqo index via a simplified interface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>q</strong> (<em>str</em>) – The query string to search for.</p></li>
+<li><p><strong>index_name</strong> (<em>str</em>) – The name of the index to search.</p></li>
+<li><p><strong>limit</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of results to retrieve. Defaults to 10.</p></li>
+<li><p><strong>offset</strong> (<em>int</em><em>, </em><em>optional</em>) – The offset for the search results. Defaults to 0.</p></li>
+<li><p><strong>searchable_attributes</strong> (<em>Optional</em><em>[</em><em>list</em><em>]</em><em>, </em><em>optional</em>) – The attributes to search. Defaults to None.</p></li>
+<li><p><strong>method</strong> (<em>Literal</em><em>[</em><em>&quot;tensor&quot;</em><em>, </em><em>&quot;lexical&quot;</em><em>, </em><em>&quot;hybrid&quot;</em><em>]</em><em>, </em><em>optional</em>) – The search method to use, tensor uses only vectors, lexical uses only text, hybrid combines both with RRF. Defaults to “hybrid”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If an invalid search method is provided.</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The search response from Marqo.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="marqo-instantapi documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Marqo.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
