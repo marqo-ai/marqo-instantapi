@@ -36,6 +36,6 @@ jobs:
       if: github.ref == 'refs/heads/main'
       uses: peaceiris/actions-gh-pages@v4
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ secrets.DOCS_CREATION_TOKEN }}
         publish_dir: ./docs/build/html
         keep_files: false
