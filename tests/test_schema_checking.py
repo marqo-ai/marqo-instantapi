@@ -28,7 +28,6 @@ def simple_flat_schema() -> dict:
 
 
 def test_basic_schema(adapter: InstantAPIMarqoAdapter, simple_schema: dict):
-
     correct_response = {"response": {"name": "John Doe", "email": "john.doe@email.com"}}
 
     assert adapter._check_against_schema(simple_schema, correct_response)

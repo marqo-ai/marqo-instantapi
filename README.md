@@ -35,3 +35,17 @@ Then, run the example script:
 pip install python-dotenv
 python example.py
 ```
+
+## Creating documentation
+
+To create documentation for the package, install the required packages:
+
+```bash
+pip install -r requirements.docs.txt
+```
+
+Then, run the following command:
+
+```bash
+sphinx-build -b html docs/source docs/build
+```

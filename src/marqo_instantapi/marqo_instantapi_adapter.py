@@ -7,6 +7,8 @@ from typing import Optional, Union, Literal, Any
 
 
 class InstantAPIMarqoAdapter:
+    """A class for interfacing with Marqo and InstantAPI."""
+
     def __init__(
         self,
         marqo_url: str = "http://localhost:8882",
@@ -52,6 +54,10 @@ class InstantAPIMarqoAdapter:
 
         Returns:
             dict: index creation response
+
+        Examples:
+            >>> marqo_adapter = InstantAPIMarqoAdapter()
+            >>> marqo_adapter.create_index("my-index")
         """
         settings = {**self.default_marqo_settings_dict}
 
@@ -75,6 +81,28 @@ class InstantAPIMarqoAdapter:
         self.mq.index(index_name).search(q="")
         return response
 
+    def delete_index(self, index_name: str, confirm: bool = False) -> dict:
+        """Delete a Marqo index.
+
+        Args:
+            index_name (str): The name of the index to delete.
+            confirm (bool, optional): Automatically confirms the deletion. Defaults to False.
+
+        Returns:
+            dict: The deletion response.
+        """
+        if not confirm:
+            choice = None
+            while choice not in ("y", "n"):
+                choice = input(
+                    f"Are you sure you want to delete the index '{index_name}'? (y/n): "
+                )
+            if choice == "n":
+                return {"message": "Deletion cancelled."}
+
+        response = self.mq.delete_index(index_name)
+        return response
+
     def _extract_page_data(
         self, webpage_url: str, api_method_name: str, api_response_structure: dict
     ):
@@ -83,6 +111,7 @@ class InstantAPIMarqoAdapter:
 
         Args:
             webpage_url (str): The URL of the webpage to extract.
+            api_method_name (str): The name of the API method to use for data extraction.
             api_response_structure (dict): The expected structure of the API's response.
 
         Returns:
@@ -109,6 +138,8 @@ class InstantAPIMarqoAdapter:
         Args:
             text_fields_to_index (list[str]): The text fields to index.
             image_fields_to_index (list[str]): The image fields to index.
+            total_image_weight (float): The total weight for images.
+            total_text_weight (float): The total weight for text.
 
         Returns:
             Union[Union[dict, None], list]: A mappings object for Marqo
@@ -150,15 +181,32 @@ class InstantAPIMarqoAdapter:
         return mappings, [self.combination_field]
 
     def _check_schema_for_marqo(self, schema: dict) -> None:
+        """Check if a schema conforms to Marqo's requirements. Schemas must be flat documents.
+
+        Args:
+            schema (dict): The schema to check.
+
+        Raises:
+            ValueError: If the schema does not conform to Marqo's requirements.
+        """
         for k in schema:
             if not isinstance(schema[k], str):
                 raise ValueError(
-                    "All schema values must be strings. Marqo only accepts flat documents."
+                    "All schema values must be strings. Marqo only accepts flat documents so you cannot nest JSON."
                 )
 
     def _check_against_schema(
-        self, schema: dict | list | Any, response: dict | list | Any
+        self, schema: Union[dict, list, Any], response: Union[dict, list, Any]
     ) -> bool:
+        """Check if a response conforms to a schema.
+
+        Args:
+            schema (Union[dict, list, Any]): The schema to check against.
+            response (Union[dict, list, Any]): The response to check.
+
+        Returns:
+            bool: True if the response conforms to the schema, False otherwise.
+        """
         if isinstance(schema, dict):
             if not isinstance(response, dict):
                 return False
@@ -181,15 +229,48 @@ class InstantAPIMarqoAdapter:
         return True
 
     def _check_index_exists(self, index_name: str) -> bool:
+        """Check if a Marqo index exists.
+
+        Args:
+            index_name (str): The name of the index to check.
+
+        Returns:
+            bool: True if the index exists, False otherwise.
+        """
         response = self.mq.get_indexes()
         return index_name in [index["indexName"] for index in response["results"]]
+
+    def _check_index_can_use_images(self, index_name: str) -> bool:
+        """Check if a Marqo index can use images.
+
+        Args:
+            index_name (str): The name of the index to check.
+
+        Returns:
+            bool: True if the index can use images, False otherwise.
+        """
+        response = self.mq.index(index_name).get_settings()
+        return response["treatUrlsAndPointersAsImages"]
 
     def _create_index_from_fields(
         self,
         index_name: str,
         text_fields_to_index: list[str] = [],
         image_fields_to_index: list[str] = [],
-    ):
+    ) -> dict:
+        """Create a Marqo index based on the fields to index.
+
+        Args:
+            index_name (str): The name of the index to create.
+            text_fields_to_index (list[str], optional): A list of text fields for indexing. Defaults to [].
+            image_fields_to_index (list[str], optional): A list of image fields for indexing. Defaults to [].
+
+        Raises:
+            ValueError: If no fields are provided for indexing.
+
+        Returns:
+            dict: The index creation response.
+        """
         if not text_fields_to_index and not image_fields_to_index:
             raise ValueError(
                 "At least one field must be specified in text_fields_to_index and/or image_fields_to_index."
@@ -213,6 +294,26 @@ class InstantAPIMarqoAdapter:
         total_text_weight: float = 0.1,
         enforce_schema: bool = True,
     ) -> list[dict]:
+        """Add documents to a Marqo index from a list of webpage URLs, data is extracted using the InstantAPI Retrieve API.
+
+        Args:
+            webpage_urls (list[str]): A list of webpage URLs to index.
+            index_name (str): The name of the index to add documents to. If the index does not exist, it will be created based on the fields to index.
+            api_response_structure (dict): The expected structure of the API's response, this is passed to InstantAPI.
+            api_method_name (str): The name of the API method to use for data extraction, this is passed to InstantAPI and should be descriptive to help to AI know what information to get.
+            text_fields_to_index (list[str], optional): A list of text fields for indexing. Defaults to [].
+            image_fields_to_index (list[str], optional): A list of image fields for indexing. Defaults to [].
+            client_batch_size (int, optional): The client batch size for Marqo, controls how many docs are sent at a time. Defaults to 8.
+            total_image_weight (float, optional): The total weight for images, applies when both image and text fields are provided. Defaults to 0.9.
+            total_text_weight (float, optional): The total weight for text, applies when both image and text fields are provided. Defaults to 0.1.
+            enforce_schema (bool, optional): Toggle strict enforcement of InstantAPI responses against the schema. Defaults to True.
+
+        Raises:
+            ValueError: If no fields are provided for indexing.
+
+        Returns:
+            list[dict]: A list of responses for each document added.
+        """
 
         if not text_fields_to_index and not image_fields_to_index:
             raise ValueError(
@@ -222,6 +323,16 @@ class InstantAPIMarqoAdapter:
         if not self._check_index_exists(index_name):
             self._create_index_from_fields(
                 index_name, text_fields_to_index, image_fields_to_index
+            )
+
+        if image_fields_to_index and not self._check_index_can_use_images(index_name):
+            raise ValueError(
+                "The index does not support images, please recreate the index create_index(index_name, multimodal=True)"
+            )
+
+        if not image_fields_to_index and self._check_index_can_use_images(index_name):
+            raise ValueError(
+                "The index supports images, please either provide image fields to index or recreate the index create_index(index_name, multimodal=False)"
             )
 
         self._check_schema_for_marqo(api_response_structure)
@@ -252,7 +363,7 @@ class InstantAPIMarqoAdapter:
             page_data["_source_webpage_url"] = webpage_url
 
             documents.append(page_data)
-        print(documents)
+
         mappings, tensor_fields = self._make_mappings(
             text_fields_to_index,
             image_fields_to_index,
@@ -281,10 +392,10 @@ class InstantAPIMarqoAdapter:
         """Get the root domain of a URL.
 
         Args:
-            url (str): _description_
+            url (str): The URL to extract the domain from.
 
         Returns:
-            str: _description_
+            str: The subdomain, domain, and suffix of the URL combined.
         """
         extracted = tldextract.extract(url)
         domain = f"{extracted.subdomain}.{extracted.domain}.{extracted.suffix}"
@@ -299,8 +410,32 @@ class InstantAPIMarqoAdapter:
         text_fields_to_index: list[str] = [],
         image_fields_to_index: list[str] = [],
         client_batch_size: int = 8,
+        total_image_weight: float = 0.9,
+        total_text_weight: float = 0.1,
+        enforce_schema: bool = True,
         max_pages: Optional[int] = None,
     ) -> list[dict]:
+        """Crawl a set of webpages and add them to a Marqo index.
+
+        Args:
+            initial_webpage_urls (list[str]): A list of initial webpage URLs to start the crawl from.
+            allowed_domains (set[str]): A set of domains to exclude from the crawl.
+            index_name (str): The name of the index to add documents to. If the index does not exist, it will be created based on the fields to index.
+            api_response_structure (dict): The expected structure of the API's response, this is passed to InstantAPI.
+            text_fields_to_index (list[str], optional): A list of text fields for indexing. Defaults to [].
+            image_fields_to_index (list[str], optional): A list of image fields for indexing. Defaults to [].
+            client_batch_size (int, optional): The client batch size for Marqo, controls how many docs are sent at a time. Defaults to 8.
+            total_image_weight (float, optional): The total weight for images, applies when both image and text fields are provided. Defaults to 0.9.
+            total_text_weight (float, optional): The total weight for text, applies when both image and text fields are provided. Defaults to 0.1.
+            enforce_schema (bool, optional): Toggle strict enforcement of InstantAPI responses against the schema. Defaults to True.
+            max_pages (Optional[int], optional): The maximum number of pages to crawl. Defaults to None.
+
+        Raises:
+            ValueError: If no fields are provided for indexing.
+
+        Returns:
+            list[dict]: A list of responses for each document added.
+        """
 
         if not text_fields_to_index and not image_fields_to_index:
             raise ValueError(
@@ -333,6 +468,9 @@ class InstantAPIMarqoAdapter:
                 text_fields_to_index,
                 image_fields_to_index,
                 client_batch_size,
+                total_image_weight,
+                total_text_weight,
+                enforce_schema,
             )
             responses += response
 
@@ -347,10 +485,43 @@ class InstantAPIMarqoAdapter:
         q: str,
         index_name: str,
         limit: int = 10,
+        offset: int = 0,
         searchable_attributes: Optional[list] = None,
         method: Literal["tensor", "lexical", "hybrid"] = "hybrid",
     ) -> dict:
+        """Search a Marqo index via a simplified interface.
+
+        Args:
+            q (str): The query string to search for.
+            index_name (str): The name of the index to search.
+            limit (int, optional): The number of results to retrieve. Defaults to 10.
+            offset (int, optional): The offset for the search results. Defaults to 0.
+            searchable_attributes (Optional[list], optional): The attributes to search. Defaults to None.
+            method (Literal["tensor", "lexical", "hybrid"], optional): The search method to use, tensor uses only vectors, lexical uses only text, hybrid combines both with RRF. Defaults to "hybrid".
+
+        Raises:
+            ValueError: If an invalid search method is provided.
+
+        Returns:
+            dict: The search response from Marqo.
+        """
+
+        if method not in ("tensor", "lexical", "hybrid"):
+            raise ValueError(
+                "Invalid search method, must be one of 'tensor', 'lexical', or 'hybrid'."
+            )
+
+        ef_search = None
+        if limit + offset > 2000:
+            ef_search = limit + offset
+
         response = self.mq.index(index_name).search(
-            q, limit=limit, searchable_attributes=searchable_attributes
+            q,
+            limit=limit,
+            offset=offset,
+            ef_search=ef_search,
+            searchable_attributes=searchable_attributes,
+            search_method=method,
         )
+
         return response

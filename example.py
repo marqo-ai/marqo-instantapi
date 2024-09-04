@@ -39,7 +39,9 @@ def main():
     print("Add documents response:")
     print(response)
 
-    response = adapter.search(q="coffee mug", index_name="example-index", limit=10)
+    response = adapter.search(
+        q="coffee mug", index_name="example-index", limit=10, method="tensor"
+    )
 
     print("Search results:")
     print(
