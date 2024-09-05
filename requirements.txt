@@ -1,3 +1,9 @@
 marqo==3.7.0
 requests
 tldextract==5.1.2
+python-dotenv
+pytest
+sphinx 
+sphinx-rtd-theme 
+sphinx-autodoc-typehints
+black

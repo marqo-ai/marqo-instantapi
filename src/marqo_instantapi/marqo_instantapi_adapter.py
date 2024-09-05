@@ -37,6 +37,9 @@ class InstantAPIMarqoAdapter:
             "filterStringMaxLength": 50,
         }
 
+        self.default_text_model = "hf/snowflake-arctic-embed-m-v1.5"
+        self.default_image_model = "open_clip/ViT-B-16-SigLIP-512/webli"
+
     def create_index(
         self,
         index_name: str,
@@ -63,9 +66,9 @@ class InstantAPIMarqoAdapter:
 
         if model is None:
             if multimodal:
-                settings["model"] = "open_clip/ViT-B-32/laion2b_s34b_b79k"
+                settings["model"] = self.default_image_model
             else:
-                settings["model"] = "hf/e5-base-v2"
+                settings["model"] = self.default_text_model
 
         settings["treatUrlsAndPointersAsImages"] = multimodal
 
@@ -81,12 +84,15 @@ class InstantAPIMarqoAdapter:
         self.mq.index(index_name).search(q="")
         return response
 
-    def delete_index(self, index_name: str, confirm: bool = False) -> dict:
+    def delete_index(
+        self, index_name: str, confirm: bool = False, skip_if_not_exists: bool = False
+    ) -> dict:
         """Delete a Marqo index.
 
         Args:
             index_name (str): The name of the index to delete.
             confirm (bool, optional): Automatically confirms the deletion. Defaults to False.
+            skip_if_not_exists (bool, optional): Skip deletion if the index does not exist. Defaults to False.
 
         Returns:
             dict: The deletion response.
@@ -100,7 +106,14 @@ class InstantAPIMarqoAdapter:
             if choice == "n":
                 return {"message": "Deletion cancelled."}
 
-        response = self.mq.delete_index(index_name)
+        if not self._check_index_exists(index_name) and skip_if_not_exists:
+            return {
+                "acknowledged": True,
+                "index": index_name,
+                "message": "Index does not exist, skipping deletion.",
+            }
+
+        response = self.mq.index(index_name).delete()
         return response
 
     def _extract_page_data(

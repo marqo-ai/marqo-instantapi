@@ -16,6 +16,11 @@ To get started, you need to run the Marqo container:
 docker run --name marqo -it -p 8882:8882 marqoai/marqo:latest
 ```
 
+Install the required dependencies:
+```bash
+pip install -r requirements.txt
+```
+
 Then, install the marqo-instantapi package:
 ```bash
 pip install .
@@ -32,20 +37,35 @@ INSTANTAPI_KEY=your_instantapi_key
 Then, run the example script:
 
 ```bash
-pip install python-dotenv
 python example.py
 ```
 
 ## Creating documentation
 
-To create documentation for the package, install the required packages:
-
-```bash
-pip install -r requirements.docs.txt
-```
-
-Then, run the following command:
+Eun the following command to locally build the documentation:
 
 ```bash
 sphinx-build -b html docs/source docs/build
+```
+
+## Running tests
+
+To run tests use pytest:
+
+```bash
+python -m pytest
+```
+
+To run the integration tests as well add the flag `--integration`:
+
+```bash
+python -m pytest --integration
+```
+
+## Formatting code
+
+We use the `black` code formatter. To format the code run:
+
+```bash
+black .
 ```
