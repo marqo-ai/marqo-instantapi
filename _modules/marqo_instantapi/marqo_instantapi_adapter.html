@@ -73,9 +73,11 @@
   <h1>Source code for marqo_instantapi.marqo_instantapi_adapter</h1><div class="highlight"><pre>
 <span></span><span class="kn">import</span> <span class="nn">marqo</span>
 <span class="kn">import</span> <span class="nn">tldextract</span>
-<span class="kn">from</span> <span class="nn">marqo_instantapi.instant_api_client</span> <span class="kn">import</span> <span class="n">InstantAPIClient</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
 <span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="kn">import</span> <span class="nn">concurrent.futures</span>
+<span class="kn">from</span> <span class="nn">marqo_instantapi.instant_api_client</span> <span class="kn">import</span> <span class="n">InstantAPIClient</span>
+
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Any</span>
 
 
@@ -375,6 +377,45 @@
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_index</span><span class="p">(</span><span class="n">index_name</span><span class="p">,</span> <span class="n">multimodal</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">_process_page</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">webpage_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">api_method_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">api_response_structure</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+        <span class="n">enforce_schema</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Process a single page and extract data from it.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            webpage_url (str): The URL of the webpage to process.</span>
+<span class="sd">            api_method_name (str): The name of the API method to use for data extraction.</span>
+<span class="sd">            api_response_structure (dict): The expected structure of the API&#39;s response.</span>
+<span class="sd">            enforce_schema (bool, optional): Toggle strict enforcement of InstantAPI responses against the schema. Defaults to True.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: The processed page data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">page_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_page_data</span><span class="p">(</span>
+            <span class="n">webpage_url</span><span class="o">=</span><span class="n">webpage_url</span><span class="p">,</span>
+            <span class="n">api_method_name</span><span class="o">=</span><span class="n">api_method_name</span><span class="p">,</span>
+            <span class="n">api_response_structure</span><span class="o">=</span><span class="n">api_response_structure</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">enforce_schema</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_against_schema</span><span class="p">(</span><span class="n">api_response_structure</span><span class="p">,</span> <span class="n">page_data</span><span class="p">):</span>
+                <span class="k">return</span> <span class="p">{</span>
+                    <span class="s2">&quot;failed_check&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                    <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">{</span>
+                        <span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="n">webpage_url</span><span class="p">,</span>
+                        <span class="s2">&quot;response_data&quot;</span><span class="p">:</span> <span class="n">page_data</span><span class="p">,</span>
+                        <span class="s2">&quot;response&quot;</span><span class="p">:</span> <span class="s2">&quot;Schema check failed&quot;</span><span class="p">,</span>
+                    <span class="p">},</span>
+                <span class="p">}</span>
+
+        <span class="n">page_data</span><span class="p">[</span><span class="s2">&quot;_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">(</span><span class="n">webpage_url</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="n">page_data</span><span class="p">[</span><span class="s2">&quot;_source_webpage_url&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">webpage_url</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;failed_check&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">webpage_url</span><span class="p">,</span> <span class="n">page_data</span><span class="p">)}</span>
+
 <div class="viewcode-block" id="InstantAPIMarqoAdapter.add_documents">
 <a class="viewcode-back" href="../../modules.html#marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.add_documents">[docs]</a>
     <span class="k">def</span> <span class="nf">add_documents</span><span class="p">(</span>
@@ -389,20 +430,22 @@
         <span class="n">total_image_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
         <span class="n">total_text_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
         <span class="n">enforce_schema</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">instantapi_threads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Add documents to a Marqo index from a list of webpage URLs, data is extracted using the InstantAPI Retrieve API.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            webpage_urls (list[str]): A list of webpage URLs to index.</span>
-<span class="sd">            index_name (str): The name of the index to add documents to. If the index does not exist, it will be created based on the fields to index.</span>
-<span class="sd">            api_response_structure (dict): The expected structure of the API&#39;s response, this is passed to InstantAPI.</span>
-<span class="sd">            api_method_name (str): The name of the API method to use for data extraction, this is passed to InstantAPI and should be descriptive to help to AI know what information to get.</span>
+<span class="sd">            index_name (str): The name of the index to add documents to.</span>
+<span class="sd">            api_response_structure (dict): The expected structure of the API&#39;s response.</span>
+<span class="sd">            api_method_name (str): The name of the API method to use for data extraction.</span>
 <span class="sd">            text_fields_to_index (list[str], optional): A list of text fields for indexing. Defaults to [].</span>
 <span class="sd">            image_fields_to_index (list[str], optional): A list of image fields for indexing. Defaults to [].</span>
-<span class="sd">            client_batch_size (int, optional): The client batch size for Marqo, controls how many docs are sent at a time. Defaults to 8.</span>
-<span class="sd">            total_image_weight (float, optional): The total weight for images, applies when both image and text fields are provided. Defaults to 0.9.</span>
-<span class="sd">            total_text_weight (float, optional): The total weight for text, applies when both image and text fields are provided. Defaults to 0.1.</span>
+<span class="sd">            client_batch_size (int, optional): The client batch size for Marqo. Defaults to 8.</span>
+<span class="sd">            total_image_weight (float, optional): The total weight for images. Defaults to 0.9.</span>
+<span class="sd">            total_text_weight (float, optional): The total weight for text. Defaults to 0.1.</span>
 <span class="sd">            enforce_schema (bool, optional): Toggle strict enforcement of InstantAPI responses against the schema. Defaults to True.</span>
+<span class="sd">            instantapi_threads (int, optional): The number of threads to use for InstantAPI requests. Defaults to 10.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: If no fields are provided for indexing.</span>
@@ -410,7 +453,6 @@
 <span class="sd">        Returns:</span>
 <span class="sd">            list[dict]: A list of responses for each document added.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="k">if</span> <span class="ow">not</span> <span class="n">text_fields_to_index</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">image_fields_to_index</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">&quot;At least one field must be specified in text_fields_to_index and/or image_fields_to_index.&quot;</span>
@@ -433,33 +475,29 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_schema_for_marqo</span><span class="p">(</span><span class="n">api_response_structure</span><span class="p">)</span>
 
+        <span class="c1"># Parallel processing with ThreadPoolExecutor</span>
         <span class="n">failed_schema_checks</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">urls_to_index</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">documents</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">webpage_url</span> <span class="ow">in</span> <span class="n">webpage_urls</span><span class="p">:</span>
-            <span class="n">page_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_page_data</span><span class="p">(</span>
-                <span class="n">webpage_url</span><span class="o">=</span><span class="n">webpage_url</span><span class="p">,</span>
-                <span class="n">api_method_name</span><span class="o">=</span><span class="n">api_method_name</span><span class="p">,</span>
-                <span class="n">api_response_structure</span><span class="o">=</span><span class="n">api_response_structure</span><span class="p">,</span>
+
+        <span class="k">with</span> <span class="n">concurrent</span><span class="o">.</span><span class="n">futures</span><span class="o">.</span><span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">url</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_page</span><span class="p">(</span>
+                    <span class="n">url</span><span class="p">,</span> <span class="n">api_method_name</span><span class="p">,</span> <span class="n">api_response_structure</span><span class="p">,</span> <span class="n">enforce_schema</span>
+                <span class="p">),</span>
+                <span class="n">webpage_urls</span><span class="p">,</span>
             <span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">enforce_schema</span><span class="p">:</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_against_schema</span><span class="p">(</span><span class="n">api_response_structure</span><span class="p">,</span> <span class="n">page_data</span><span class="p">):</span>
-                    <span class="n">failed_schema_checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                        <span class="p">{</span>
-                            <span class="s2">&quot;url&quot;</span><span class="p">:</span> <span class="n">webpage_url</span><span class="p">,</span>
-                            <span class="s2">&quot;response_data&quot;</span><span class="p">:</span> <span class="n">page_data</span><span class="p">,</span>
-                            <span class="s2">&quot;response&quot;</span><span class="p">:</span> <span class="s2">&quot;Schema check failed&quot;</span><span class="p">,</span>
-                        <span class="p">}</span>
-                    <span class="p">)</span>
-                    <span class="k">continue</span>
+        <span class="c1"># Process the results and separate failed schema checks</span>
+        <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;failed_check&quot;</span><span class="p">]:</span>
+                <span class="n">failed_schema_checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">webpage_url</span><span class="p">,</span> <span class="n">page_data</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span>
+                <span class="n">urls_to_index</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">webpage_url</span><span class="p">)</span>
+                <span class="n">documents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">page_data</span><span class="p">)</span>
 
-            <span class="n">urls_to_index</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">webpage_url</span><span class="p">)</span>
-            <span class="n">page_data</span><span class="p">[</span><span class="s2">&quot;_id&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">(</span><span class="n">webpage_url</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-            <span class="n">page_data</span><span class="p">[</span><span class="s2">&quot;_source_webpage_url&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">webpage_url</span>
-
-            <span class="n">documents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">page_data</span><span class="p">)</span>
-
+        <span class="c1"># Prepare the mappings and tensor fields</span>
         <span class="n">mappings</span><span class="p">,</span> <span class="n">tensor_fields</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_mappings</span><span class="p">(</span>
             <span class="n">text_fields_to_index</span><span class="p">,</span>
             <span class="n">image_fields_to_index</span><span class="p">,</span>
@@ -467,6 +505,7 @@
             <span class="n">total_text_weight</span><span class="p">,</span>
         <span class="p">)</span>
 
+        <span class="c1"># Add the documents to Marqo</span>
         <span class="n">responses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mq</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">index_name</span><span class="p">)</span><span class="o">.</span><span class="n">add_documents</span><span class="p">(</span>
             <span class="n">documents</span><span class="o">=</span><span class="n">documents</span><span class="p">,</span>
             <span class="n">tensor_fields</span><span class="o">=</span><span class="n">tensor_fields</span><span class="p">,</span>
@@ -477,6 +516,7 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">responses</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
             <span class="n">responses</span> <span class="o">=</span> <span class="p">[</span><span class="n">responses</span><span class="p">]</span>
 
+        <span class="c1"># Collate all responses</span>
         <span class="n">outcomes</span> <span class="o">=</span> <span class="n">failed_schema_checks</span>
         <span class="k">for</span> <span class="n">response</span> <span class="ow">in</span> <span class="n">responses</span><span class="p">:</span>
             <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">response</span><span class="p">[</span><span class="s2">&quot;items&quot;</span><span class="p">]:</span>
@@ -589,7 +629,7 @@
         <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
         <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">searchable_attributes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;tensor&quot;</span><span class="p">,</span> <span class="s2">&quot;lexical&quot;</span><span class="p">,</span> <span class="s2">&quot;hybrid&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;hybrid&quot;</span><span class="p">,</span>
+        <span class="n">search_method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;tensor&quot;</span><span class="p">,</span> <span class="s2">&quot;lexical&quot;</span><span class="p">,</span> <span class="s2">&quot;hybrid&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;hybrid&quot;</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Search a Marqo index via a simplified interface.</span>
 
@@ -599,7 +639,7 @@
 <span class="sd">            limit (int, optional): The number of results to retrieve. Defaults to 10.</span>
 <span class="sd">            offset (int, optional): The offset for the search results. Defaults to 0.</span>
 <span class="sd">            searchable_attributes (Optional[list], optional): The attributes to search. Defaults to None.</span>
-<span class="sd">            method (Literal[&quot;tensor&quot;, &quot;lexical&quot;, &quot;hybrid&quot;], optional): The search method to use, tensor uses only vectors, lexical uses only text, hybrid combines both with RRF. Defaults to &quot;hybrid&quot;.</span>
+<span class="sd">            search_method (Literal[&quot;tensor&quot;, &quot;lexical&quot;, &quot;hybrid&quot;], optional): The search method to use, tensor uses only vectors, lexical uses only text, hybrid combines both with RRF. Defaults to &quot;hybrid&quot;.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: If an invalid search method is provided.</span>
@@ -608,7 +648,7 @@
 <span class="sd">            dict: The search response from Marqo.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">if</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;tensor&quot;</span><span class="p">,</span> <span class="s2">&quot;lexical&quot;</span><span class="p">,</span> <span class="s2">&quot;hybrid&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">search_method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;tensor&quot;</span><span class="p">,</span> <span class="s2">&quot;lexical&quot;</span><span class="p">,</span> <span class="s2">&quot;hybrid&quot;</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="s2">&quot;Invalid search method, must be one of &#39;tensor&#39;, &#39;lexical&#39;, or &#39;hybrid&#39;.&quot;</span>
             <span class="p">)</span>
@@ -617,13 +657,28 @@
         <span class="k">if</span> <span class="n">limit</span> <span class="o">+</span> <span class="n">offset</span> <span class="o">&gt;</span> <span class="mi">2000</span><span class="p">:</span>
             <span class="n">ef_search</span> <span class="o">=</span> <span class="n">limit</span> <span class="o">+</span> <span class="n">offset</span>
 
+        <span class="k">if</span> <span class="n">searchable_attributes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># TODO: Update when marqo reaches 2.12</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">&quot;Search with unstructured indexes does not support searchable attributes yet. This will be implemented in Marqo 2.12.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">hybrid_parameters</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">search_method</span> <span class="o">==</span> <span class="s2">&quot;hybrid&quot;</span> <span class="ow">and</span> <span class="n">searchable_attributes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">hybrid_parameters</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;searchableAttributesLexical&quot;</span><span class="p">:</span> <span class="n">searchable_attributes</span><span class="p">,</span>
+                <span class="s2">&quot;searchableAttributesTensor&quot;</span><span class="p">:</span> <span class="n">searchable_attributes</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="n">searchable_attributes</span> <span class="o">=</span> <span class="kc">None</span>
+
         <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mq</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">index_name</span><span class="p">)</span><span class="o">.</span><span class="n">search</span><span class="p">(</span>
             <span class="n">q</span><span class="p">,</span>
             <span class="n">limit</span><span class="o">=</span><span class="n">limit</span><span class="p">,</span>
             <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span>
             <span class="n">ef_search</span><span class="o">=</span><span class="n">ef_search</span><span class="p">,</span>
             <span class="n">searchable_attributes</span><span class="o">=</span><span class="n">searchable_attributes</span><span class="p">,</span>
-            <span class="n">search_method</span><span class="o">=</span><span class="n">method</span><span class="p">,</span>
+            <span class="n">search_method</span><span class="o">=</span><span class="n">search_method</span><span class="p">,</span>
+            <span class="n">hybrid_parameters</span><span class="o">=</span><span class="n">hybrid_parameters</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">response</span></div>
