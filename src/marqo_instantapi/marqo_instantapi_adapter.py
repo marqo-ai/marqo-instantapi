@@ -1,8 +1,10 @@
 import marqo
 import tldextract
-from marqo_instantapi.instant_api_client import InstantAPIClient
 from collections import deque
 import hashlib
+import concurrent.futures
+from marqo_instantapi.instant_api_client import InstantAPIClient
+
 from typing import Optional, Union, Literal, Any
 
 
@@ -294,6 +296,45 @@ class InstantAPIMarqoAdapter:
 
         return self.create_index(index_name, multimodal=True)
 
+    def _process_page(
+        self,
+        webpage_url: str,
+        api_method_name: str,
+        api_response_structure: dict,
+        enforce_schema: bool = True,
+    ) -> dict:
+        """Process a single page and extract data from it.
+
+        Args:
+            webpage_url (str): The URL of the webpage to process.
+            api_method_name (str): The name of the API method to use for data extraction.
+            api_response_structure (dict): The expected structure of the API's response.
+            enforce_schema (bool, optional): Toggle strict enforcement of InstantAPI responses against the schema. Defaults to True.
+
+        Returns:
+            dict: The processed page data.
+        """
+        page_data = self._extract_page_data(
+            webpage_url=webpage_url,
+            api_method_name=api_method_name,
+            api_response_structure=api_response_structure,
+        )
+
+        if enforce_schema:
+            if not self._check_against_schema(api_response_structure, page_data):
+                return {
+                    "failed_check": True,
+                    "data": {
+                        "url": webpage_url,
+                        "response_data": page_data,
+                        "response": "Schema check failed",
+                    },
+                }
+
+        page_data["_id"] = hashlib.md5(webpage_url.encode()).hexdigest()
+        page_data["_source_webpage_url"] = webpage_url
+        return {"failed_check": False, "data": (webpage_url, page_data)}
+
     def add_documents(
         self,
         webpage_urls: list[str],
@@ -306,20 +347,22 @@ class InstantAPIMarqoAdapter:
         total_image_weight: float = 0.9,
         total_text_weight: float = 0.1,
         enforce_schema: bool = True,
+        instantapi_threads: int = 10,
     ) -> list[dict]:
         """Add documents to a Marqo index from a list of webpage URLs, data is extracted using the InstantAPI Retrieve API.
 
         Args:
             webpage_urls (list[str]): A list of webpage URLs to index.
-            index_name (str): The name of the index to add documents to. If the index does not exist, it will be created based on the fields to index.
-            api_response_structure (dict): The expected structure of the API's response, this is passed to InstantAPI.
-            api_method_name (str): The name of the API method to use for data extraction, this is passed to InstantAPI and should be descriptive to help to AI know what information to get.
+            index_name (str): The name of the index to add documents to.
+            api_response_structure (dict): The expected structure of the API's response.
+            api_method_name (str): The name of the API method to use for data extraction.
             text_fields_to_index (list[str], optional): A list of text fields for indexing. Defaults to [].
             image_fields_to_index (list[str], optional): A list of image fields for indexing. Defaults to [].
-            client_batch_size (int, optional): The client batch size for Marqo, controls how many docs are sent at a time. Defaults to 8.
-            total_image_weight (float, optional): The total weight for images, applies when both image and text fields are provided. Defaults to 0.9.
-            total_text_weight (float, optional): The total weight for text, applies when both image and text fields are provided. Defaults to 0.1.
+            client_batch_size (int, optional): The client batch size for Marqo. Defaults to 8.
+            total_image_weight (float, optional): The total weight for images. Defaults to 0.9.
+            total_text_weight (float, optional): The total weight for text. Defaults to 0.1.
             enforce_schema (bool, optional): Toggle strict enforcement of InstantAPI responses against the schema. Defaults to True.
+            instantapi_threads (int, optional): The number of threads to use for InstantAPI requests. Defaults to 10.
 
         Raises:
             ValueError: If no fields are provided for indexing.
@@ -327,7 +370,6 @@ class InstantAPIMarqoAdapter:
         Returns:
             list[dict]: A list of responses for each document added.
         """
-
         if not text_fields_to_index and not image_fields_to_index:
             raise ValueError(
                 "At least one field must be specified in text_fields_to_index and/or image_fields_to_index."
@@ -350,33 +392,29 @@ class InstantAPIMarqoAdapter:
 
         self._check_schema_for_marqo(api_response_structure)
 
+        # Parallel processing with ThreadPoolExecutor
         failed_schema_checks = []
         urls_to_index = []
         documents = []
-        for webpage_url in webpage_urls:
-            page_data = self._extract_page_data(
-                webpage_url=webpage_url,
-                api_method_name=api_method_name,
-                api_response_structure=api_response_structure,
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            results = executor.map(
+                lambda url: self._process_page(
+                    url, api_method_name, api_response_structure, enforce_schema
+                ),
+                webpage_urls,
             )
 
-            if enforce_schema:
-                if not self._check_against_schema(api_response_structure, page_data):
-                    failed_schema_checks.append(
-                        {
-                            "url": webpage_url,
-                            "response_data": page_data,
-                            "response": "Schema check failed",
-                        }
-                    )
-                    continue
+        # Process the results and separate failed schema checks
+        for result in results:
+            if result["failed_check"]:
+                failed_schema_checks.append(result["data"])
+            else:
+                webpage_url, page_data = result["data"]
+                urls_to_index.append(webpage_url)
+                documents.append(page_data)
 
-            urls_to_index.append(webpage_url)
-            page_data["_id"] = hashlib.md5(webpage_url.encode()).hexdigest()
-            page_data["_source_webpage_url"] = webpage_url
-
-            documents.append(page_data)
-
+        # Prepare the mappings and tensor fields
         mappings, tensor_fields = self._make_mappings(
             text_fields_to_index,
             image_fields_to_index,
@@ -384,6 +422,7 @@ class InstantAPIMarqoAdapter:
             total_text_weight,
         )
 
+        # Add the documents to Marqo
         responses = self.mq.index(index_name).add_documents(
             documents=documents,
             tensor_fields=tensor_fields,
@@ -394,6 +433,7 @@ class InstantAPIMarqoAdapter:
         if not isinstance(responses, list):
             responses = [responses]
 
+        # Collate all responses
         outcomes = failed_schema_checks
         for response in responses:
             for item in response["items"]:
@@ -500,7 +540,7 @@ class InstantAPIMarqoAdapter:
         limit: int = 10,
         offset: int = 0,
         searchable_attributes: Optional[list] = None,
-        method: Literal["tensor", "lexical", "hybrid"] = "hybrid",
+        search_method: Literal["tensor", "lexical", "hybrid"] = "hybrid",
     ) -> dict:
         """Search a Marqo index via a simplified interface.
 
@@ -510,7 +550,7 @@ class InstantAPIMarqoAdapter:
             limit (int, optional): The number of results to retrieve. Defaults to 10.
             offset (int, optional): The offset for the search results. Defaults to 0.
             searchable_attributes (Optional[list], optional): The attributes to search. Defaults to None.
-            method (Literal["tensor", "lexical", "hybrid"], optional): The search method to use, tensor uses only vectors, lexical uses only text, hybrid combines both with RRF. Defaults to "hybrid".
+            search_method (Literal["tensor", "lexical", "hybrid"], optional): The search method to use, tensor uses only vectors, lexical uses only text, hybrid combines both with RRF. Defaults to "hybrid".
 
         Raises:
             ValueError: If an invalid search method is provided.
@@ -519,7 +559,7 @@ class InstantAPIMarqoAdapter:
             dict: The search response from Marqo.
         """
 
-        if method not in ("tensor", "lexical", "hybrid"):
+        if search_method not in ("tensor", "lexical", "hybrid"):
             raise ValueError(
                 "Invalid search method, must be one of 'tensor', 'lexical', or 'hybrid'."
             )
@@ -528,13 +568,28 @@ class InstantAPIMarqoAdapter:
         if limit + offset > 2000:
             ef_search = limit + offset
 
+        if searchable_attributes is not None:
+            # TODO: Update when marqo reaches 2.12
+            raise NotImplementedError(
+                "Search with unstructured indexes does not support searchable attributes yet. This will be implemented in Marqo 2.12."
+            )
+
+        hybrid_parameters = None
+        if search_method == "hybrid" and searchable_attributes is not None:
+            hybrid_parameters = {
+                "searchableAttributesLexical": searchable_attributes,
+                "searchableAttributesTensor": searchable_attributes,
+            }
+            searchable_attributes = None
+
         response = self.mq.index(index_name).search(
             q,
             limit=limit,
             offset=offset,
             ef_search=ef_search,
             searchable_attributes=searchable_attributes,
-            search_method=method,
+            search_method=search_method,
+            hybrid_parameters=hybrid_parameters,
         )
 
         return response

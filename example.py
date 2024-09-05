@@ -9,6 +9,7 @@ load_dotenv()
 def main():
     adapter = InstantAPIMarqoAdapter(instantapi_key=os.getenv("INSTANTAPI_KEY"))
 
+    adapter.delete_index("example-index", confirm=True, skip_if_not_exists=True)
     response = adapter.create_index(
         "example-index", multimodal=True, skip_if_exists=True
     )
@@ -40,7 +41,7 @@ def main():
     print(response)
 
     response = adapter.search(
-        q="coffee mug", index_name="example-index", limit=10, method="tensor"
+        q="coffee mug", index_name="example-index", limit=10, search_method="tensor"
     )
 
     print("Search results:")

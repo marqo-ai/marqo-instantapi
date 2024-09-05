@@ -1,5 +1,6 @@
 import pytest
 import marqo
+from unittest.mock import patch
 import hashlib
 from marqo_instantapi import InstantAPIMarqoAdapter
 
@@ -90,35 +91,64 @@ def test_search_index(adapter: InstantAPIMarqoAdapter, mq: marqo.Client):
     adapter.delete_index("example-index", confirm=True)
 
 
+# TODO: introduce back with Marqo 2.12
+# @pytest.mark.integration
+# def test_search_index_searchable_attrs(
+#     adapter: InstantAPIMarqoAdapter, mq: marqo.Client
+# ):
+#     adapter.delete_index("example-index", confirm=True, skip_if_not_exists=True)
+#     adapter.create_index("example-index", multimodal=False)
+
+#     response = mq.index("example-index").add_documents(
+#         [
+#             {"title": "Hello, World!", "content": "This is a test document."},
+#             {"title": "Goodbye, World!", "content": "This is another test document."},
+#         ],
+#         tensor_fields=["title"],
+#     )
+
+#     assert not response["errors"]
+
+#     search_results = adapter.search(
+#         q="hello",
+#         index_name="example-index",
+#         searchable_attributes=["title"],
+#     )
+
+#     assert len(search_results["hits"]) == 2
+#     assert search_results["hits"][0]["title"] == "Hello, World!"
+#     assert search_results["hits"][1]["title"] == "Goodbye, World!"
+
+#     adapter.delete_index("example-index", confirm=True)
+
+
 @pytest.mark.integration
-def text_add_documents(adapter: InstantAPIMarqoAdapter):
-    def patched_extract_page_data(
-        self, webpage_url, api_method_name, api_response_structure
-    ):
-        return {"title": "Hello, World!", "content": "This is a test document."}
+def test_add_documents(adapter: InstantAPIMarqoAdapter):
+    with patch.object(adapter, "_extract_page_data") as mock_extract_page_data:
+        mock_extract_page_data.return_value = {
+            "title": "Hello, World!",
+            "content": "This is a test document.",
+        }
 
-    adapter._extract_page_data = patched_extract_page_data
+        adapter.delete_index("example-index", confirm=True, skip_if_not_exists=True)
+        adapter.create_index("example-index", multimodal=False)
 
-    adapter.delete_index("example-index", confirm=True, skip_if_not_exists=True)
+        schema = {
+            "title": "the title of the page",
+            "content": "text content summarising the page",
+        }
 
-    adapter.create_index("example-index", multimodal=False)
+        response = adapter.add_documents(
+            webpage_urls=["https://example.com"],
+            index_name="example-index",
+            api_response_structure=schema,
+            api_method_name="getPageSummary",
+            text_fields_to_index=["title", "content"],
+        )
 
-    schema = {
-        "title": "the title of the page",
-        "content": "text content summarising the page",
-    }
+        url_md5 = hashlib.md5("https://example.com".encode()).hexdigest()
 
-    response = adapter.add_documents(
-        webpage_urls=["https://example.com"],
-        index_name="example-index",
-        api_response_structure=schema,
-        api_method_name="getPageSummary",
-        text_fields_to_index=["title", "content"],
-    )
+        response_ids = [doc["url_md5"] for doc in response]
 
-    url_md5 = hashlib.md5("https://example.com".encode()).hexdigest()
-
-    response_ids = [doc["url_md5"] for doc in response]
-
-    assert len(response_ids) == 1
-    assert response_ids[0] == url_md5
+        assert len(response_ids) == 1
+        assert response_ids[0] == url_md5
