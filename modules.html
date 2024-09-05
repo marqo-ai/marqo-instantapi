@@ -234,13 +234,14 @@
 
 <dl class="py method">
 <dt class="sig sig-object py" id="marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.delete_index">
-<span class="sig-name descname"><span class="pre">delete_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confirm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/marqo_instantapi/marqo_instantapi_adapter.html#InstantAPIMarqoAdapter.delete_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.delete_index" title="Link to this definition"></a></dt>
+<span class="sig-name descname"><span class="pre">delete_index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">index_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">confirm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_if_not_exists</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/marqo_instantapi/marqo_instantapi_adapter.html#InstantAPIMarqoAdapter.delete_index"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.delete_index" title="Link to this definition"></a></dt>
 <dd><p>Delete a Marqo index.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>index_name</strong> (<em>str</em>) – The name of the index to delete.</p></li>
 <li><p><strong>confirm</strong> (<em>bool</em><em>, </em><em>optional</em>) – Automatically confirms the deletion. Defaults to False.</p></li>
+<li><p><strong>skip_if_not_exists</strong> (<em>bool</em><em>, </em><em>optional</em>) – Skip deletion if the index does not exist. Defaults to False.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

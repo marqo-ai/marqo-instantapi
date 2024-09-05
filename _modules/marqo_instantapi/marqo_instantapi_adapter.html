@@ -112,6 +112,9 @@
             <span class="s2">&quot;filterStringMaxLength&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span>
         <span class="p">}</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">default_text_model</span> <span class="o">=</span> <span class="s2">&quot;hf/snowflake-arctic-embed-m-v1.5&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">default_image_model</span> <span class="o">=</span> <span class="s2">&quot;open_clip/ViT-B-16-SigLIP-512/webli&quot;</span>
+
 <div class="viewcode-block" id="InstantAPIMarqoAdapter.create_index">
 <a class="viewcode-back" href="../../modules.html#marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.create_index">[docs]</a>
     <span class="k">def</span> <span class="nf">create_index</span><span class="p">(</span>
@@ -140,9 +143,9 @@
 
         <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">multimodal</span><span class="p">:</span>
-                <span class="n">settings</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;open_clip/ViT-B-32/laion2b_s34b_b79k&quot;</span>
+                <span class="n">settings</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_image_model</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">settings</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;hf/e5-base-v2&quot;</span>
+                <span class="n">settings</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_text_model</span>
 
         <span class="n">settings</span><span class="p">[</span><span class="s2">&quot;treatUrlsAndPointersAsImages&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">multimodal</span>
 
@@ -161,12 +164,15 @@
 
 <div class="viewcode-block" id="InstantAPIMarqoAdapter.delete_index">
 <a class="viewcode-back" href="../../modules.html#marqo_instantapi.marqo_instantapi_adapter.InstantAPIMarqoAdapter.delete_index">[docs]</a>
-    <span class="k">def</span> <span class="nf">delete_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">confirm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">delete_index</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">index_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">confirm</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">skip_if_not_exists</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Delete a Marqo index.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            index_name (str): The name of the index to delete.</span>
 <span class="sd">            confirm (bool, optional): Automatically confirms the deletion. Defaults to False.</span>
+<span class="sd">            skip_if_not_exists (bool, optional): Skip deletion if the index does not exist. Defaults to False.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            dict: The deletion response.</span>
@@ -180,7 +186,14 @@
             <span class="k">if</span> <span class="n">choice</span> <span class="o">==</span> <span class="s2">&quot;n&quot;</span><span class="p">:</span>
                 <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;Deletion cancelled.&quot;</span><span class="p">}</span>
 
-        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mq</span><span class="o">.</span><span class="n">delete_index</span><span class="p">(</span><span class="n">index_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_index_exists</span><span class="p">(</span><span class="n">index_name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">skip_if_not_exists</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s2">&quot;acknowledged&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                <span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="n">index_name</span><span class="p">,</span>
+                <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="s2">&quot;Index does not exist, skipping deletion.&quot;</span><span class="p">,</span>
+            <span class="p">}</span>
+
+        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mq</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">index_name</span><span class="p">)</span><span class="o">.</span><span class="n">delete</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">response</span></div>
 
 
