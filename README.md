@@ -5,8 +5,8 @@
 ## Prerequisites
 
 - Docker installed on your machine.
-- Python 3.7 or above.
-- An Instant API key
+- Python 3.8 or above.
+- An [InstantAPI API key](https://instantapi.ai/)
 
 ## Installation
 
